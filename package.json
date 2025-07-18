@@ -6,23 +6,29 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "jest"
   },
   "dependencies": {
-    "@actioncodes/protocol": "^1.0.0",
+    "@actioncodes/protocol": "^1.0.1",
     "@solana/web3.js": "^1.98.2",
     "@upstash/redis": "^1.35.1",
+    "js-sha256": "^0.11.1",
     "next": "15.4.1",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.4.1",
+    "jest": "^30.0.4",
+    "ts-jest": "^29.4.0",
     "typescript": "^5"
   }
 }
