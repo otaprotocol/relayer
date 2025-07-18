@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
     try {
         const parsed = RegisterRequestSchema.parse(body);
-        const { code, pubkey, signature, prefix = PROTOCOL_CODE_PREFIX, chain, timestamp, meta } = parsed;
+        const { code, pubkey, signature, prefix = PROTOCOL_CODE_PREFIX, chain, timestamp } = parsed;
 
         if (!protocol.isChainSupported(chain)) {
             throw new ActionCodesRelayerError("UNSUPPORTED_CHAIN", `Chain '${chain}' is not supported`);
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
                 remainingInSeconds: Math.floor(actionCode.remainingTime / 1000),
                 status: actionCode.status,
             }));
-        } catch (error) {
+        } catch {
             throw new ActionCodesRelayerError("INVALID_PAYLOAD", "Can't construct action code.", 400);
         }
     } catch (error) {
