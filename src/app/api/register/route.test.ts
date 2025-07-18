@@ -248,6 +248,34 @@ describe('POST /api/register', () => {
   });
 
   describe('error handling', () => {
+    it('should handle empty request body', async () => {
+      const request = {
+        json: jest.fn().mockRejectedValue(new SyntaxError('Unexpected end of JSON input')),
+      } as any;
+
+      const response = await POST(request);
+      const responseData = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(responseData.code).toBe('INVALID_PAYLOAD');
+      expect(responseData.message).toBe('Invalid JSON in request body');
+      expect(responseData.details).toEqual({ details: 'Request body must be valid JSON' });
+    });
+
+    it('should handle malformed JSON', async () => {
+      const request = {
+        json: jest.fn().mockRejectedValue(new SyntaxError('Unexpected token in JSON at position 1')),
+      } as any;
+
+      const response = await POST(request);
+      const responseData = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(responseData.code).toBe('INVALID_PAYLOAD');
+      expect(responseData.message).toBe('Invalid JSON in request body');
+      expect(responseData.details).toEqual({ details: 'Request body must be valid JSON' });
+    });
+
     it('should handle unknown errors', async () => {
       const { default: protocol } = require('@actioncodes/relayer/protocol/protocol');
       protocol.isChainSupported.mockImplementation(() => {

@@ -8,7 +8,18 @@ import redis, { getKey } from "@actioncodes/relayer/utils/redis";
 import protocol from "@actioncodes/relayer/protocol/protocol";
 
 export async function POST(request: NextRequest) {
-    const body = await request.json();
+    let body;
+    
+    try {
+        body = await request.json();
+    } catch {
+        return NextResponse.json(
+            new ActionCodesRelayerError("INVALID_PAYLOAD", "Invalid JSON in request body", 400, {
+                details: "Request body must be valid JSON",
+            }),
+            { status: 400 }
+        );
+    }
 
     try {
         const parsed = RegisterRequestSchema.parse(body);
