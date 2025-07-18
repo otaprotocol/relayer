@@ -1,7 +1,7 @@
 'use server'
 
 import { PROTOCOL_CODE_PREFIX, PROTOCOL_PREFIX, PROTOCOL_VERSION } from "@actioncodes/protocol"
-import { getProtocolPubkeys } from "@actioncodes/relayer/utils/auth";
+import { getProtocolPubkeys } from "@actioncodes/relayer/config/keys";
 
 export async function getRelayerData() {
     try {
