@@ -1,0 +1,66 @@
+import { NextRequest, NextResponse } from "next/server";
+import { ZodError } from "zod";
+import { CodeGenerator, PROTOCOL_CODE_PREFIX } from "@actioncodes/protocol";
+import { RegisterRequestSchema, RegisterResponseSchema } from "@actioncodes/relayer/schemas/register";
+import { ActionCodesRelayerError } from "@actioncodes/relayer/utils/error";
+import { encryptField } from "@actioncodes/relayer/utils/secure";
+import redis, { getKey } from "@actioncodes/relayer/utils/redis";
+import protocol from "@actioncodes/relayer/protocol/protocol";
+
+export async function POST(request: NextRequest) {
+    const body = await request.json();
+
+    try {
+        const parsed = RegisterRequestSchema.parse(body);
+        const { code, pubkey, signature, prefix = PROTOCOL_CODE_PREFIX, chain, timestamp, meta } = parsed;
+
+        if (!protocol.isChainSupported(chain)) {
+            throw new ActionCodesRelayerError("UNSUPPORTED_CHAIN", `Chain '${chain}' is not supported`);
+        }
+
+        const adapter = protocol.getChainAdapter(chain);
+        if (!adapter) {
+            throw new ActionCodesRelayerError("ADAPTER_NOT_FOUND", `Adapter for '${chain}' not found`);
+        }
+
+        if (!CodeGenerator.validateCode(code, pubkey, timestamp, prefix)) {
+            throw new ActionCodesRelayerError("INVALID_PAYLOAD", "Invalid code");
+        }
+
+        try {
+            const actionCode = await protocol.createActionCode(pubkey, () => Promise.resolve(signature), chain, prefix, timestamp);
+
+            const encrypted = encryptField(actionCode.encoded, code);
+            const key = getKey(`${actionCode.codeHash}`);
+            await redis.set(key, encrypted, { ex: protocol.getConfig().codeTTL });
+
+            return NextResponse.json(RegisterResponseSchema.parse({
+                codeHash: actionCode.codeHash,
+                issuedAt: actionCode.timestamp,
+                expiresAt: actionCode.timestamp + protocol.getConfig().codeTTL,
+                remainingInSeconds: Math.floor(actionCode.remainingTime / 1000),
+                status: actionCode.status,
+            }));
+        } catch (error) {
+            throw new ActionCodesRelayerError("INVALID_PAYLOAD", "Can't construct action code.", 400);
+        }
+    } catch (error) {
+        if (error instanceof ZodError) {
+            return NextResponse.json(
+                new ActionCodesRelayerError("INVALID_PAYLOAD", "Invalid request payload", 400, {
+                    details: error.message,
+                }),
+                { status: 400 }
+            );
+        }
+
+        if (error instanceof ActionCodesRelayerError) {
+            return NextResponse.json(error.toJSON(), { status: error.status });
+        }
+
+        return NextResponse.json(
+            new ActionCodesRelayerError("UNKNOWN_ERROR", "Unknown error", 500),
+            { status: 500 }
+        );
+    }
+}

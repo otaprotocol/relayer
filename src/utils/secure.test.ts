@@ -264,7 +264,7 @@ describe('secure', () => {
 
             const encrypted = encryptField(actionCode.encoded, code.code);
             const decrypted = decryptField(encrypted, code.code);
-            
+
             // The decrypted value should match the original encoded value
             expect(decrypted).toBe(actionCode.encoded);
         });

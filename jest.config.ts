@@ -13,6 +13,7 @@ const config: Config = {
   },
   moduleNameMapper: {
     '^@actioncodes/protocol$': '<rootDir>/node_modules/@actioncodes/protocol/dist/index.js',
+    '^@actioncodes/relayer/(.*)$': '<rootDir>/src/$1',
   },
   extensionsToTreatAsEsm: ['.ts'],
   collectCoverageFrom: [
