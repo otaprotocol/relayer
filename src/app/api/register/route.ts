@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
+import { sha256 } from 'js-sha256';
 import { CodeGenerator, PROTOCOL_CODE_PREFIX } from "@actioncodes/protocol";
 import { RegisterRequestSchema, RegisterResponseSchema } from "@actioncodes/relayer/schemas/register";
 import { ActionCodesRelayerError } from "@actioncodes/relayer/utils/error";
@@ -9,7 +10,7 @@ import protocol from "@actioncodes/relayer/protocol/protocol";
 
 export async function POST(request: NextRequest) {
     let body;
-    
+
     try {
         body = await request.json();
     } catch {
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
             const actionCode = await protocol.createActionCode(pubkey, () => Promise.resolve(signature), chain, prefix, timestamp);
 
             const encrypted = encryptField(actionCode.encoded, code);
-            const key = getKey(`${actionCode.codeHash}`);
+            const key = getKey(sha256(actionCode.code));
             await redis.set(key, encrypted, { ex: protocol.getConfig().codeTTL });
 
             return NextResponse.json(RegisterResponseSchema.parse({
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
                 remainingInSeconds: Math.floor(actionCode.remainingTime / 1000),
                 status: actionCode.status,
             }));
-        } catch {
+        } catch (error) {
             throw new ActionCodesRelayerError("INVALID_PAYLOAD", "Can't construct action code.", 400);
         }
     } catch (error) {

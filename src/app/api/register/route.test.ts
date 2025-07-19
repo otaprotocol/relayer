@@ -14,8 +14,9 @@ jest.mock('@actioncodes/relayer/utils/redis', () => ({
   getKey: jest.fn((key: string) => `test:${key}`),
 }));
 
-jest.mock('@actioncodes/relayer/protocol/protocol', () => {
-  const mockProtocol = {
+jest.mock('@actioncodes/relayer/protocol/protocol', () => ({
+  __esModule: true,
+  default: {
     isChainSupported: jest.fn().mockReturnValue(true),
     getChainAdapter: jest.fn().mockReturnValue({
       verifyCodeSignature: jest.fn().mockReturnValue(true),
@@ -26,16 +27,13 @@ jest.mock('@actioncodes/relayer/protocol/protocol', () => {
       remainingTime: 120000, // 2 minutes (CODE_TTL)
       status: 'pending',
       encoded: 'test-encoded-data',
+      code: '12345678',
     }),
     getConfig: jest.fn().mockReturnValue({
       codeTTL: 120000, // 2 minutes (CODE_TTL)
     }),
-  };
-  return {
-    __esModule: true,
-    default: mockProtocol,
-  };
-});
+  },
+}));
 
 jest.mock('@actioncodes/relayer/utils/secure', () => ({
   encryptField: jest.fn().mockReturnValue('encrypted-data'),
@@ -48,6 +46,9 @@ jest.mock('@actioncodes/protocol', () => ({
     ...jest.requireActual('@actioncodes/protocol').CodeGenerator,
     validateCode: jest.fn().mockReturnValue(true),
   },
+  CODE_LENGTH: 8,
+  MAX_PREFIX_LENGTH: 10,
+  MIN_PREFIX_LENGTH: 1,
 }));
 
 describe('POST /api/register', () => {
@@ -75,6 +76,7 @@ describe('POST /api/register', () => {
       remainingTime: 120000, // 2 minutes (CODE_TTL)
       status: 'pending',
       encoded: 'test-encoded-data',
+      code: validCode,
     });
     protocol.getConfig.mockReturnValue({
       codeTTL: 120000, // 2 minutes (CODE_TTL)
@@ -87,9 +89,11 @@ describe('POST /api/register', () => {
       keypair.secretKey
     );
 
+    const pubkey = keypair.publicKey.toBase58();
+
     return {
       code: validCode,
-      pubkey: keypair.publicKey.toBase58(),
+      pubkey: pubkey,
       signature: Buffer.from(signature).toString('base64'),
       timestamp: validTimestamp,
       prefix: 'DEFAULT',
