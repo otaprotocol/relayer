@@ -68,6 +68,18 @@ jest.mock('@actioncodes/protocol', () => ({
       remainingTime: fields.expiresAt - Date.now(),
       expired: fields.expiresAt < Date.now(),
     })),
+    fromEncoded: jest.fn().mockImplementation((encoded) => ({
+      code: '12345678',
+      pubkey: '11111111111111111111111111111112',
+      timestamp: Date.now() - 60000, // 1 minute ago
+      chain: 'solana',
+      prefix: 'DEFAULT',
+      signature: 'test-signature',
+      status: 'pending',
+      expiresAt: Date.now() + 240000, // 4 minutes from now
+      transaction: undefined,
+      meta: undefined,
+    })),
   },
   CODE_LENGTH: 8,
   MAX_PREFIX_LENGTH: 12,
@@ -102,7 +114,7 @@ describe('POST /api/attach', () => {
     
     // Default mocks
     mockRedis.get.mockResolvedValue(mockEncryptedActionCode);
-    mockSecure.decryptField.mockReturnValue(mockDecryptedActionCode);
+    mockSecure.decryptField.mockReturnValue('decrypted-encoded-data');
     mockSecure.encryptField.mockReturnValue('new-encrypted-data');
     mockProtocol.isChainSupported.mockReturnValue(true);
     mockProtocol.getChainAdapter.mockReturnValue({
@@ -274,7 +286,9 @@ describe('POST /api/attach', () => {
         },
       };
 
-      mockSecure.decryptField.mockReturnValue(JSON.stringify(actionCodeWithTransaction));
+      // Mock ActionCode.fromEncoded to return an action code with transaction
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockReturnValue(actionCodeWithTransaction);
 
       const requestBody = {
         code: '12345678',
@@ -298,7 +312,9 @@ describe('POST /api/attach', () => {
         timestamp: Date.now() - 400000, // 6+ minutes ago
       };
 
-      mockSecure.decryptField.mockReturnValue(JSON.stringify(expiredActionCode));
+      // Mock ActionCode.fromEncoded to return an expired action code
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockReturnValue(expiredActionCode);
 
       const requestBody = {
         code: '12345678',
@@ -365,6 +381,13 @@ describe('POST /api/attach', () => {
         },
       };
 
+      // Mock ActionCode.fromEncoded to return a valid action code
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockReturnValue({
+        ...mockActionCode,
+        timestamp: Date.now() - 30000, // 30 seconds ago (well within TTL)
+      });
+
       const request = createRequest(requestBody);
       const response = await POST(request);
       const responseData = await response.json();
@@ -424,6 +447,13 @@ describe('POST /api/attach', () => {
         chain: 'solana',
         transaction: serializedTx,
       };
+
+      // Mock ActionCode.fromEncoded to return a valid action code
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockReturnValue({
+        ...mockActionCode,
+        timestamp: Date.now() - 30000, // 30 seconds ago (well within TTL)
+      });
 
       const request = createRequest(requestBody);
       const response = await POST(request);
@@ -501,6 +531,13 @@ describe('POST /api/attach', () => {
           params: { amount: 0.001 },
         },
       };
+
+      // Mock ActionCode.fromEncoded to return a valid action code
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockReturnValue({
+        ...mockActionCode,
+        timestamp: Date.now() - 30000, // 30 seconds ago (well within TTL)
+      });
 
       const request = createRequest(requestBody);
       const response = await POST(request);
@@ -589,6 +626,13 @@ describe('POST /api/attach', () => {
         chain: 'solana',
         transaction: serializedTx,
       };
+
+      // Mock ActionCode.fromEncoded to return a valid action code
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockReturnValue({
+        ...mockActionCode,
+        timestamp: Date.now() - 30000, // 30 seconds ago (well within TTL)
+      });
 
       const request = createRequest(requestBody);
       const response = await POST(request);

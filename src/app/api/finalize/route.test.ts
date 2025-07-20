@@ -39,6 +39,59 @@ jest.mock('@actioncodes/protocol', () => ({
     ...jest.requireActual('@actioncodes/protocol').CodeGenerator,
     validateCodeFormat: jest.fn().mockReturnValue(true),
   },
+  ActionCode: {
+    fromEncoded: jest.fn().mockImplementation((encoded) => ({
+      code: '12345678',
+      pubkey: '11111111111111111111111111111112',
+      timestamp: Date.now() - 60000, // 1 minute ago
+      chain: 'solana',
+      prefix: 'DEFAULT',
+      signature: 'test-signature',
+      status: 'resolved',
+      expiresAt: Date.now() + 240000, // 4 minutes from now
+      transaction: {
+        transaction: 'base64-transaction-data',
+        txType: 'transfer',
+      },
+      meta: {
+        description: 'Test action code',
+        params: { test: 'value' },
+      },
+      json: {
+        code: '12345678',
+        pubkey: '11111111111111111111111111111112',
+        timestamp: Date.now() - 60000,
+        chain: 'solana',
+        prefix: 'DEFAULT',
+        signature: 'test-signature',
+        status: 'resolved',
+        expiresAt: Date.now() + 240000,
+        transaction: {
+          transaction: 'base64-transaction-data',
+          txType: 'transfer',
+        },
+        meta: {
+          description: 'Test action code',
+          params: { test: 'value' },
+        },
+      },
+      encoded: 'mock-encoded-action-code',
+    })),
+    fromPayload: jest.fn().mockImplementation((payload) => {
+      // Add txSignature to the transaction if it's not already there
+      const updatedPayload = {
+        ...payload,
+        transaction: {
+          ...payload.transaction,
+          txSignature: payload.transaction?.txSignature || '42bHReo7rqAsAhTm6Ertbrnw8uCy6WfthakuvViW6q5GU5zg5jTBoTmRd6RJFpXTPGfYgSKqJUzqSWcn6GaByLr8',
+        },
+      };
+      return {
+        ...updatedPayload,
+        encoded: JSON.stringify(updatedPayload),
+      };
+    }),
+  },
   CODE_LENGTH: 8,
   MAX_PREFIX_LENGTH: 10,
 }));
@@ -88,7 +141,7 @@ describe('POST /api/finalize', () => {
     
     // Default mocks
     mockRedis.get.mockResolvedValue(mockEncryptedActionCode);
-    mockSecure.decryptField.mockReturnValue(mockDecryptedActionCode);
+    mockSecure.decryptField.mockReturnValue('decrypted-encoded-data');
     mockSecure.encryptField.mockReturnValue('new-encrypted-data');
     mockProtocol.getConfig.mockReturnValue({ codeTTL: CODE_TTL });
     mockProtocol.getChainAdapter.mockReturnValue({
@@ -245,7 +298,8 @@ describe('POST /api/finalize', () => {
         ...mockActionCode,
         timestamp: Date.now() - (CODE_TTL + 60000), // Expired
       };
-      mockSecure.decryptField.mockReturnValue(JSON.stringify(expiredActionCode));
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockReturnValue(expiredActionCode);
 
       const requestBody = createValidRequest();
       const request = createRequest(requestBody);
@@ -263,7 +317,8 @@ describe('POST /api/finalize', () => {
         ...mockActionCode,
         transaction: undefined,
       };
-      mockSecure.decryptField.mockReturnValue(JSON.stringify(actionCodeWithoutTx));
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockReturnValue(actionCodeWithoutTx);
 
       const requestBody = createValidRequest();
       const request = createRequest(requestBody);
@@ -284,7 +339,8 @@ describe('POST /api/finalize', () => {
           txSignature: 'already-finalized-signature',
         },
       };
-      mockSecure.decryptField.mockReturnValue(JSON.stringify(finalizedActionCode));
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockReturnValue(finalizedActionCode);
 
       const requestBody = createValidRequest();
       const request = createRequest(requestBody);
@@ -302,7 +358,8 @@ describe('POST /api/finalize', () => {
         ...mockActionCode,
         chain: undefined,
       };
-      mockSecure.decryptField.mockReturnValue(JSON.stringify(actionCodeWithoutChain));
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockReturnValue(actionCodeWithoutChain);
 
       const requestBody = createValidRequest();
       const request = createRequest(requestBody);
@@ -320,7 +377,8 @@ describe('POST /api/finalize', () => {
         ...mockActionCode,
         chain: 'unsupported-chain',
       };
-      mockSecure.decryptField.mockReturnValue(JSON.stringify(unsupportedChainActionCode));
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockReturnValue(unsupportedChainActionCode);
 
       const requestBody = createValidRequest();
       const request = createRequest(requestBody);
@@ -337,6 +395,13 @@ describe('POST /api/finalize', () => {
   describe('🔗 Blockchain Verification Tests', () => {
     test('15. Rejects when transaction not found on blockchain', async () => {
       mockSolanaConnection.getTransaction.mockResolvedValue(null);
+
+      // Ensure ActionCode.fromEncoded returns a valid action code with solana chain
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockReturnValue({
+        ...mockActionCode,
+        chain: 'solana',
+      });
 
       const requestBody = createValidRequest();
       const request = createRequest(requestBody);
@@ -355,6 +420,13 @@ describe('POST /api/finalize', () => {
         meta: { err: 'Transaction failed' },
       });
 
+      // Ensure ActionCode.fromEncoded returns a valid action code with solana chain
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockReturnValue({
+        ...mockActionCode,
+        chain: 'solana',
+      });
+
       const requestBody = createValidRequest();
       const request = createRequest(requestBody);
 
@@ -371,6 +443,13 @@ describe('POST /api/finalize', () => {
         verifyFinalizedTransaction: jest.fn().mockReturnValue(false),
       });
 
+      // Ensure ActionCode.fromEncoded returns a valid action code with solana chain
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockReturnValue({
+        ...mockActionCode,
+        chain: 'solana',
+      });
+
       const requestBody = createValidRequest();
       const request = createRequest(requestBody);
 
@@ -384,6 +463,13 @@ describe('POST /api/finalize', () => {
 
     test('18. Handles blockchain verification errors gracefully', async () => {
       mockSolanaConnection.getTransaction.mockRejectedValue(new Error('Network error'));
+
+      // Ensure ActionCode.fromEncoded returns a valid action code with solana chain
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockReturnValue({
+        ...mockActionCode,
+        chain: 'solana',
+      });
 
       const requestBody = createValidRequest();
       const request = createRequest(requestBody);
@@ -415,7 +501,11 @@ describe('POST /api/finalize', () => {
     });
 
     test('20. Rejects when decrypted data is invalid JSON', async () => {
-      mockSecure.decryptField.mockReturnValue('invalid-json');
+      // Mock ActionCode.fromEncoded to throw an error
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockImplementation(() => {
+        throw new Error('Invalid JSON');
+      });
 
       const requestBody = createValidRequest();
       const request = createRequest(requestBody);
@@ -429,7 +519,10 @@ describe('POST /api/finalize', () => {
     });
 
     test('21. Rejects when decrypted action code has invalid structure', async () => {
-      mockSecure.decryptField.mockReturnValue(JSON.stringify('not-an-object'));
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockImplementation(() => {
+        throw new Error('Invalid action code format');
+      });
 
       const requestBody = createValidRequest();
       const request = createRequest(requestBody);
@@ -439,7 +532,7 @@ describe('POST /api/finalize', () => {
 
       expect(response.status).toBe(400);
       expect(responseData.code).toBe('INVALID_PAYLOAD');
-      expect(responseData.message).toBe('Invalid action code format');
+      expect(responseData.message).toBe('Invalid code provided for decryption');
     });
   });
 
@@ -458,8 +551,29 @@ describe('POST /api/finalize', () => {
     });
 
     test('23. Handles encryption errors gracefully', async () => {
+      // Reset all mocks to ensure clean state
+      jest.clearAllMocks();
+      
+      // Set up the mocks needed for this test
+      mockRedis.get.mockResolvedValue(mockEncryptedActionCode);
+      mockSecure.decryptField.mockReturnValue('decrypted-encoded-data');
       mockSecure.encryptField.mockImplementation(() => {
         throw new Error('Encryption failed');
+      });
+      mockProtocol.getConfig.mockReturnValue({ codeTTL: CODE_TTL });
+      mockProtocol.getChainAdapter.mockReturnValue({
+        verifyFinalizedTransaction: jest.fn().mockReturnValue(true),
+      });
+      mockSolanaConnection.getTransaction.mockResolvedValue({
+        ...validTransaction,
+        meta: { err: null },
+      });
+
+      // Ensure ActionCode.fromEncoded is properly mocked
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockReturnValue({
+        ...mockActionCode,
+        chain: 'solana',
       });
 
       const requestBody = createValidRequest();
@@ -498,7 +612,8 @@ describe('POST /api/finalize', () => {
           transaction: 'base64-data',
         },
       };
-      mockSecure.decryptField.mockReturnValue(JSON.stringify(minimalActionCode));
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockReturnValue(minimalActionCode);
 
       const requestBody = createValidRequest();
       const request = createRequest(requestBody);
@@ -515,8 +630,14 @@ describe('POST /api/finalize', () => {
         ...mockActionCode,
         extraField: 'extra-value',
         nestedField: { nested: 'value' },
+        // Ensure no txSignature to avoid "already finalized" error
+        transaction: {
+          ...mockActionCode.transaction,
+          txSignature: undefined,
+        },
       };
-      mockSecure.decryptField.mockReturnValue(JSON.stringify(extendedActionCode));
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockReturnValue(extendedActionCode);
 
       const requestBody = createValidRequest();
       const request = createRequest(requestBody);
@@ -532,6 +653,16 @@ describe('POST /api/finalize', () => {
       // Create a valid base58 signature of exactly 64 bytes
       const validBytes = new Uint8Array(64).fill(1);
       const validSignature64 = bs58.encode(validBytes);
+
+      // Ensure ActionCode.fromEncoded returns a valid action code without txSignature
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromEncoded.mockReturnValue({
+        ...mockActionCode,
+        transaction: {
+          ...mockActionCode.transaction,
+          txSignature: undefined,
+        },
+      });
 
       const requestBody = createValidRequest({
         signature: validSignature64,

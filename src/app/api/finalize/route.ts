@@ -6,7 +6,7 @@ import { ActionCodesRelayerError } from "@actioncodes/relayer/utils/error";
 import { decryptField, encryptField } from "@actioncodes/relayer/utils/secure";
 import redis, { getKey } from "@actioncodes/relayer/utils/redis";
 import protocol, { solanaConnection } from "@actioncodes/relayer/protocol/protocol";
-import { SolanaAdapter } from "@actioncodes/protocol";
+import { ActionCode, SolanaAdapter } from "@actioncodes/protocol";
 
 export async function POST(request: NextRequest) {
     let body;
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
         let decodedActionCode;
         try {
             const decrypted = decryptField(encrypted, code);
-            decodedActionCode = JSON.parse(decrypted);
+            decodedActionCode = ActionCode.fromEncoded(decrypted);
         } catch {
             throw new ActionCodesRelayerError("INVALID_PAYLOAD", "Invalid code provided for decryption", 400);
         }
@@ -109,11 +109,15 @@ export async function POST(request: NextRequest) {
 
         // 8. Add txSignature to ActionCode.transaction and set status to finalized
         decodedActionCode.transaction.txSignature = signature;
-        decodedActionCode.status = 'finalized';
+
+        const updatedActionCode = ActionCode.fromPayload({
+            ...decodedActionCode.json,
+            status: 'finalized',
+        })
 
         // 9. Re-encrypt and store again in Redis and set time again to 2 mins to allow 
         // resolve for finalized
-        const updatedEncrypted = encryptField(JSON.stringify(decodedActionCode), code);
+        const updatedEncrypted = encryptField(updatedActionCode.encoded, code);
         await redis.set(key, updatedEncrypted, { ex: protocol.getConfig().codeTTL / 1000 });
 
         // 10. Return structured result

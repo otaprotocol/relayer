@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
         let decodedActionCode;
         try {
             const decrypted = decryptField(encrypted, code);
-            decodedActionCode = JSON.parse(decrypted);
+            decodedActionCode = ActionCode.fromEncoded(decrypted);
         } catch {
             throw new ActionCodesRelayerError("INVALID_PAYLOAD", "Invalid code provided for decryption", 400);
         }
@@ -86,14 +86,14 @@ export async function POST(request: NextRequest) {
                 code: decodedActionCode.code || code,
                 pubkey: decodedActionCode.pubkey,
                 timestamp: issuedAt,
-                chain: decodedActionCode.chain,
+                chain: decodedActionCode.chain as "solana",
                 prefix: decodedActionCode.prefix || 'DEFAULT',
                 signature: decodedActionCode.signature || '',
                 status: 'pending',
                 expiresAt,
                 transaction: decodedActionCode.transaction,
                 metadata: {
-                    ...decodedActionCode.meta,
+                    ...decodedActionCode.metadata,
                     ...meta,
                 },
             });
