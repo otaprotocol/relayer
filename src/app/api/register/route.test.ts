@@ -45,6 +45,7 @@ jest.mock('@actioncodes/protocol', () => ({
   CodeGenerator: {
     ...jest.requireActual('@actioncodes/protocol').CodeGenerator,
     validateCode: jest.fn().mockReturnValue(true),
+    validateCodeFormat: jest.fn().mockReturnValue(true),
   },
   CODE_LENGTH: 8,
   MAX_PREFIX_LENGTH: 10,

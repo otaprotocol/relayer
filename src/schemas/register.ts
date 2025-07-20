@@ -1,10 +1,11 @@
 import { z } from 'zod';
 import { PublicKey } from '@solana/web3.js'
-import { SUPPORTED_CHAINS, CODE_LENGTH, MAX_PREFIX_LENGTH, MIN_PREFIX_LENGTH, ActionCodeStatus } from '@actioncodes/protocol';
+import { SUPPORTED_CHAINS, MIN_PREFIX_LENGTH, MAX_PREFIX_LENGTH, ActionCodeStatus } from '@actioncodes/protocol';
+import { CodeSchema, MetaSchema } from './code';
 
 // Currently Solana only
 export const RegisterRequestSchema = z.object({
-    code: z.string().min(CODE_LENGTH).max(CODE_LENGTH + MAX_PREFIX_LENGTH),
+    code: CodeSchema,
     pubkey: z.string()
         .length(44)
         .refine(val => {
@@ -28,10 +29,7 @@ export const RegisterRequestSchema = z.object({
     timestamp: z.number().int().positive(),
     prefix: z.string().min(MIN_PREFIX_LENGTH).max(MAX_PREFIX_LENGTH).optional(),
     chain: z.enum(SUPPORTED_CHAINS),
-    meta: z.object({
-        description: z.string().optional(),
-        params: z.record(z.string(), z.any()).optional(),
-    }).optional(),
+    meta: MetaSchema,
 });
 
 export const RegisterResponseSchema = z.object({

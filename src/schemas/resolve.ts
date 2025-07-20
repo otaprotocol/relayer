@@ -1,15 +1,9 @@
 import { z } from 'zod';
-import { ActionCodeStatus, CODE_LENGTH, MAX_PREFIX_LENGTH, CodeGenerator } from '@actioncodes/protocol';
+import { ActionCodeStatus } from '@actioncodes/protocol';
+import { CodeSchema } from './code';
 
 export const ResolveRequestSchema = z.object({
-    code: z.string()
-        .min(CODE_LENGTH)
-        .max(CODE_LENGTH + MAX_PREFIX_LENGTH)
-        .refine((val) => {
-            return CodeGenerator.validateCodeFormat(val);
-        }, {
-            message: 'Invalid code format',
-        }),
+    code: CodeSchema,
 });
 
 export const ResolveResponseSchema = z.object({
