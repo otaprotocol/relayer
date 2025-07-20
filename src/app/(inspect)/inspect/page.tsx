@@ -34,7 +34,7 @@ interface ErrorResponse {
   status: number
 }
 
-export default function InspectPage() {
+function InspectPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -167,5 +167,17 @@ export default function InspectPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function InspectPage() {
+  return (
+    <React.Suspense fallback={
+      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <InspectPageContent />
+    </React.Suspense>
   )
 }
