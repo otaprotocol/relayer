@@ -132,10 +132,10 @@ describe('POST /api/register', () => {
     });
 
     it('should register without optional fields', async () => {
-      const requestBody = createValidRequest({
-        prefix: undefined,
-        meta: undefined,
-      });
+      const requestBody = createValidRequest();
+      // Remove optional fields instead of setting them to undefined
+      delete requestBody.prefix;
+      delete requestBody.meta;
       const request = createMockRequest(requestBody);
 
       const response = await POST(request);

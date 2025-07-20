@@ -324,10 +324,54 @@ describe('GET /api/status/[code]', () => {
                 finalizedSignature: 'signature-only',
             });
         });
+
+        it('15. Future-dated timestamp is handled safely', async () => {
+            const futureTimestamp = now + 60000; // 1 minute in the future
+            const futureActionCode = createMockActionCode({ timestamp: futureTimestamp });
+            const futureExpiresAt = futureTimestamp + 120000;
+
+            mockRedis.get.mockResolvedValue('encrypted-data');
+            mockDecryptField.mockReturnValue(JSON.stringify(futureActionCode));
+
+            const response = await GET(createMockRequest(validCode), { params: { code: validCode } });
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.expiresAt).toBe(futureExpiresAt);
+            expect(data.status).toBe('pending'); // Status should still be determined by transaction state
+            // Should not crash or behave unexpectedly with future timestamps
+        });
+
+        it('16. Corrupted ActionCode with invalid status enum is handled gracefully', async () => {
+            const corruptedActionCode = {
+                timestamp: issuedAt,
+                pubkey: '9uVPTajxpMMvR9AKqhaqgSFS2AyybWanvEjnrvFfFehw',
+                chain: 'solana',
+                // Corrupted: has an invalid status field that doesn't match our enum
+                status: 'corrupted_status_value',
+                transaction: {
+                    transaction: 'test-data',
+                    txSignature: 'test-signature',
+                },
+            };
+            const encryptedData = 'encrypted-data';
+
+            mockRedis.get.mockResolvedValue('encrypted-data');
+            mockDecryptField.mockReturnValue(JSON.stringify(corruptedActionCode));
+
+            const response = await GET(createMockRequest(validCode), { params: { code: validCode } });
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            // Should ignore the corrupted status field and determine status from transaction state
+            expect(data.status).toBe('finalized'); // Based on txSignature presence
+            expect(data.hasTransaction).toBe(true);
+            expect(data.finalizedSignature).toBe('test-signature');
+        });
     });
 
     describe('📦 Optional / Bonus Tests', () => {
-        it('15. Multiple requests to same code return consistent output', async () => {
+        it('17. Multiple requests to same code return consistent output', async () => {
             const mockActionCode = createMockActionCode();
             const encryptedData = 'encrypted-data';
 
@@ -348,7 +392,7 @@ describe('GET /api/status/[code]', () => {
             expect(mockRedis.get).toHaveBeenCalledTimes(2);
         });
 
-        it('16. Status transitions work correctly', async () => {
+        it('18. Status transitions work correctly', async () => {
             // Test pending -> resolved transition
             const pendingActionCode = createMockActionCode();
             mockRedis.get.mockResolvedValue('encrypted-data');
@@ -382,7 +426,7 @@ describe('GET /api/status/[code]', () => {
             expect(data.status).toBe('finalized');
         });
 
-        it('17. Edge case: exactly at expiry time', async () => {
+        it('19. Edge case: exactly at expiry time', async () => {
             const exactExpiryTimestamp = now - 120000; // Exactly 2 minutes ago
             const exactExpiryActionCode = createMockActionCode({ timestamp: exactExpiryTimestamp });
             const exactExpiryExpiresAt = exactExpiryTimestamp + 120000;
