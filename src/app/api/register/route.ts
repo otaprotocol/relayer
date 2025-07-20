@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { sha256 } from 'js-sha256';
-import { CodeGenerator, PROTOCOL_CODE_PREFIX } from "@actioncodes/protocol";
+import { CodeGenerator, PROTOCOL_CODE_PREFIX, ActionCode } from "@actioncodes/protocol";
 import { RegisterRequestSchema, RegisterResponseSchema } from "@actioncodes/relayer/schemas/register";
 import { ActionCodesRelayerError } from "@actioncodes/relayer/utils/error";
 import { encryptField } from "@actioncodes/relayer/utils/secure";
@@ -40,7 +40,20 @@ export async function POST(request: NextRequest) {
         }
 
         try {
-            const actionCode = await protocol.createActionCode(pubkey, () => Promise.resolve(signature), chain, prefix, timestamp);
+            const actionCode = ActionCode.fromPayload({
+                code,
+                pubkey,
+                signature,
+                timestamp,
+                prefix,
+                chain,
+                status: 'pending',
+                expiresAt: timestamp + protocol.getConfig().codeTTL,
+            });
+
+            if (!protocol.validateActionCode(actionCode)) {
+                throw new ActionCodesRelayerError("INVALID_PAYLOAD", "Invalid action code", 400);
+            }
 
             const encrypted = encryptField(actionCode.encoded, code);
             const key = getKey(sha256(actionCode.code));
@@ -54,7 +67,7 @@ export async function POST(request: NextRequest) {
                 status: actionCode.status,
             }));
         } catch {
-            throw new ActionCodesRelayerError("INVALID_PAYLOAD", "Can't construct action code.", 400);
+            throw new ActionCodesRelayerError("INVALID_PAYLOAD", "Can't construct or validate action code.", 400);
         }
     } catch (error) {
         if (error instanceof ZodError) {

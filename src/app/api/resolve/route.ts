@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
         const codeHash = sha256(code);
 
         // Look up the encrypted action code in Redis
-        const key = getKey(codeHash);
+        const key = getKey(codeHash); // hash is derived from the code
         const encrypted = await redis.get<string>(key);
 
         if (!encrypted) {
@@ -51,19 +51,13 @@ export async function POST(request: NextRequest) {
         }
 
         // Calculate remaining time and status
-        const now = Date.now();
-        const issuedAt = decodedActionCode.timestamp || now;
+        const issuedAt = decodedActionCode.timestamp;
         const expiresAt = issuedAt + protocol.getConfig().codeTTL;
-        const remainingTime = Math.max(0, expiresAt - now);
+        const remainingTime = Math.max(0, expiresAt - Date.now());
         const remainingInSeconds = Math.floor(remainingTime / 1000);
 
         // Determine status based on remaining time
-        let status: 'pending' | 'active' | 'expired' | 'finalized' | 'error';
-        if (remainingTime <= 0) {
-            status = 'expired';
-        } else {
-            status = 'active';
-        }
+        const status = remainingTime <= 0 ? 'expired' : 'active';
 
         const response = {
             codeHash,

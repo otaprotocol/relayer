@@ -1,5 +1,4 @@
 import { NextRequest } from 'next/server';
-import { POST } from './route';
 import { ActionCodesRelayerError } from '@actioncodes/relayer/utils/error';
 import { Keypair } from '@solana/web3.js';
 import nacl from 'tweetnacl';
@@ -22,7 +21,7 @@ jest.mock('@actioncodes/relayer/protocol/protocol', () => ({
       verifyCodeSignature: jest.fn().mockReturnValue(true),
     }),
     createActionCode: jest.fn().mockResolvedValue({
-      codeHash: 'test-code-hash',
+      codeHash: 'ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f',
       timestamp: 1234567890,
       remainingTime: 120000, // 2 minutes (CODE_TTL)
       status: 'pending',
@@ -32,6 +31,7 @@ jest.mock('@actioncodes/relayer/protocol/protocol', () => ({
     getConfig: jest.fn().mockReturnValue({
       codeTTL: 120000, // 2 minutes (CODE_TTL)
     }),
+    validateActionCode: jest.fn().mockReturnValue(true),
   },
 }));
 
@@ -44,8 +44,26 @@ jest.mock('@actioncodes/protocol', () => ({
   ...jest.requireActual('@actioncodes/protocol'),
   CodeGenerator: {
     ...jest.requireActual('@actioncodes/protocol').CodeGenerator,
-    validateCode: jest.fn().mockReturnValue(true),
+    validateCode: jest.fn().mockImplementation((code, pubkey, timestamp, prefix) => {
+      // Basic validation - check that all parameters are provided and code is the expected length
+      return code && pubkey && timestamp && prefix && code.length === 8;
+    }),
     validateCodeFormat: jest.fn().mockReturnValue(true),
+  },
+  ActionCode: {
+    fromPayload: jest.fn().mockImplementation((payload) => ({
+      code: payload.code,
+      pubkey: payload.pubkey,
+      signature: payload.signature,
+      timestamp: 1234567890, // Use consistent timestamp
+      prefix: payload.prefix,
+      chain: payload.chain,
+      status: payload.status,
+      expiresAt: 1234567890 + 120000, // timestamp + codeTTL
+      codeHash: 'ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f',
+      remainingTime: 120000,
+      encoded: 'test-encoded-data',
+    })),
   },
   CODE_LENGTH: 8,
   MAX_PREFIX_LENGTH: 10,
@@ -56,15 +74,22 @@ describe('POST /api/register', () => {
   let keypair: Keypair;
   let validTimestamp: number;
   let validCode: string;
+  let validCodeHash: string;
+  let POST: any;
 
   beforeEach(() => {
+    // Import the route function after mocks are set up
+    const routeModule = require('./route');
+    POST = routeModule.POST;
+    
     keypair = Keypair.generate();
     validTimestamp = Date.now();
     validCode = '12345678'; // Use a simple valid code
-    
+    validCodeHash = 'ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f'
+
     // Reset mocks
     jest.clearAllMocks();
-    
+
     // Reset protocol mocks to default values
     const { default: protocol } = require('@actioncodes/relayer/protocol/protocol');
     protocol.isChainSupported.mockReturnValue(true);
@@ -72,7 +97,7 @@ describe('POST /api/register', () => {
       verifyCodeSignature: jest.fn().mockReturnValue(true),
     });
     protocol.createActionCode.mockResolvedValue({
-      codeHash: 'test-code-hash',
+      codeHash: validCodeHash,
       timestamp: 1234567890,
       remainingTime: 120000, // 2 minutes (CODE_TTL)
       status: 'pending',
@@ -82,6 +107,23 @@ describe('POST /api/register', () => {
     protocol.getConfig.mockReturnValue({
       codeTTL: 120000, // 2 minutes (CODE_TTL)
     });
+    protocol.validateActionCode.mockReturnValue(true);
+
+    // Reset ActionCode mock to default implementation
+    const { ActionCode } = require('@actioncodes/protocol');
+    ActionCode.fromPayload.mockImplementation((payload: any) => ({
+      code: payload.code,
+      pubkey: payload.pubkey,
+      signature: payload.signature,
+      timestamp: 1234567890, // Use consistent timestamp
+      prefix: payload.prefix,
+      chain: payload.chain,
+      status: payload.status,
+      expiresAt: 1234567890 + 120000, // timestamp + codeTTL
+      codeHash: 'ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f',
+      remainingTime: 120000,
+      encoded: 'test-encoded-data',
+    }));
   });
 
   const createValidRequest = (overrides: any = {}) => {
@@ -123,7 +165,7 @@ describe('POST /api/register', () => {
 
       expect(response.status).toBe(200);
       expect(responseData).toMatchObject({
-        codeHash: 'test-code-hash',
+        codeHash: validCodeHash,
         issuedAt: 1234567890,
         remainingInSeconds: Math.floor(CODE_TTL / 1000),
         status: 'pending',
@@ -156,7 +198,7 @@ describe('POST /api/register', () => {
 
       expect(response.status).toBe(200);
       expect(responseData.status).toBe('pending');
-      expect(responseData.codeHash).toBe('test-code-hash');
+      expect(responseData.codeHash).toBe(validCodeHash);
     });
   });
 
@@ -220,6 +262,7 @@ describe('POST /api/register', () => {
 
   describe('business logic errors', () => {
     it('should reject unsupported chain', async () => {
+      // Set the mock after beforeEach has run
       const { default: protocol } = require('@actioncodes/relayer/protocol/protocol');
       protocol.isChainSupported.mockReturnValue(false);
 
@@ -231,14 +274,18 @@ describe('POST /api/register', () => {
       const response = await POST(request);
       const responseData = await response.json();
 
+      console.log('Unsupported chain test response:', { status: response.status, data: responseData });
+
       expect(response.status).toBe(400);
       expect(responseData.code).toBe('UNSUPPORTED_CHAIN');
       expect(responseData.message).toBe("Chain 'solana' is not supported");
     });
 
     it('should reject when action code creation fails', async () => {
-      const { default: protocol } = require('@actioncodes/relayer/protocol/protocol');
-      protocol.createActionCode.mockRejectedValue(new Error('Creation failed'));
+      const { ActionCode } = require('@actioncodes/protocol');
+      ActionCode.fromPayload.mockImplementation(() => {
+        throw new Error('Creation failed');
+      });
 
       const requestBody = createValidRequest();
       const request = createMockRequest(requestBody);
@@ -248,7 +295,7 @@ describe('POST /api/register', () => {
 
       expect(response.status).toBe(400);
       expect(responseData.code).toBe('INVALID_PAYLOAD');
-      expect(responseData.message).toBe("Can't construct action code.");
+      expect(responseData.message).toBe("Can't construct or validate action code.");
     });
   });
 
