@@ -1,3 +1,7 @@
+import "./globals.css"
+
+import { ThemeProvider as NextThemesProvider } from "next-themes"
+
 export default function RootLayout({
     children,
 }: {
@@ -5,9 +9,14 @@ export default function RootLayout({
 }) {
     return <html>
         <body>
-            <div className="flex flex-col items-center justify-center h-screen">
+            <NextThemesProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+            >
                 {children}
-            </div>
+            </NextThemesProvider>
         </body>
     </html>;
 }       

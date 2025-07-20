@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
         const encrypted = await redis.get<string>(key);
 
         if (!encrypted) {
-            throw new ActionCodesRelayerError("CODE_NOT_FOUND", "Code hash not found or expired", 404);
+            throw new ActionCodesRelayerError("CODE_NOT_FOUND", "Code not found or expired", 404);
         }
 
         // Decrypt the action code using the provided code
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         try {
             const decrypted = decryptField(encrypted, code);
             decodedActionCode = JSON.parse(decrypted);
-        } catch (error) {
+        } catch {
             throw new ActionCodesRelayerError("INVALID_PAYLOAD", "Invalid code provided for decryption", 400);
         }
 

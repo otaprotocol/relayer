@@ -175,7 +175,7 @@ describe('POST /api/resolve', () => {
 
             expect(response.status).toBe(404);
             expect(data.code).toBe('CODE_NOT_FOUND');
-            expect(data.message).toBe('Code hash not found or expired');
+            expect(data.message).toBe('Code not found or expired');
             expect(mockRedis.get).toHaveBeenCalledWith(getKey(wrongCodeHash));
         });
 

@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
                 remainingInSeconds: Math.floor(actionCode.remainingTime / 1000),
                 status: actionCode.status,
             }));
-        } catch (error) {
+        } catch {
             throw new ActionCodesRelayerError("INVALID_PAYLOAD", "Can't construct action code.", 400);
         }
     } catch (error) {

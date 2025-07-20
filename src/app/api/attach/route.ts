@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
         const encrypted = await redis.get<string>(key);
 
         if (!encrypted) {
-            throw new ActionCodesRelayerError("CODE_NOT_FOUND", "Code hash not found or expired", 404);
+            throw new ActionCodesRelayerError("CODE_NOT_FOUND", "Code not found or expired", 404);
         }
 
         // Decrypt the action code using the provided code
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         try {
             const decrypted = decryptField(encrypted, code);
             decodedActionCode = JSON.parse(decrypted);
-        } catch (error) {
+        } catch {
             throw new ActionCodesRelayerError("INVALID_PAYLOAD", "Invalid code provided for decryption", 400);
         }
 
@@ -92,7 +92,10 @@ export async function POST(request: NextRequest) {
                 status: 'pending',
                 expiresAt,
                 transaction: decodedActionCode.transaction,
-                metadata: decodedActionCode.meta,
+                metadata: {
+                    ...decodedActionCode.meta,
+                    ...meta,
+                },
             });
 
             // Get a random keypair from the keypairs array to rotate over time
@@ -122,8 +125,8 @@ export async function POST(request: NextRequest) {
             };
 
             return NextResponse.json(AttachResponseSchema.parse(response));
-        } catch (error) {
-    
+        } catch {
+
             throw new ActionCodesRelayerError("INVALID_PAYLOAD", "Can't attach transaction to action code.", 400);
         }
     } catch (error) {

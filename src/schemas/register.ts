@@ -29,7 +29,7 @@ export const RegisterRequestSchema = z.object({
     timestamp: z.number().int().positive(),
     prefix: z.string().min(MIN_PREFIX_LENGTH).max(MAX_PREFIX_LENGTH).optional(),
     chain: z.enum(SUPPORTED_CHAINS),
-    meta: MetaSchema,
+    meta: MetaSchema.optional(),
 });
 
 export const RegisterResponseSchema = z.object({

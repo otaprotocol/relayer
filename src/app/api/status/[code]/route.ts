@@ -8,12 +8,13 @@ import protocol from "@actioncodes/relayer/protocol/protocol";
 import { sha256 } from "js-sha256";
 
 export async function GET(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     request: NextRequest,
-    { params }: { params: { code: string } }
+    { params }: { params: Promise<{ code: string }> }
 ) {
     try {
         // Validate the code parameter from the URL
-        const parsed = StatusRequestSchema.parse({ code: params.code });
+        const parsed = StatusRequestSchema.parse({ code: (await params).code });
         const { code } = parsed;
 
         // Derive the codeHash from the code
