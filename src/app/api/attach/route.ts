@@ -123,6 +123,7 @@ export async function POST(request: NextRequest) {
 
             return NextResponse.json(AttachResponseSchema.parse(response));
         } catch (error) {
+    
             throw new ActionCodesRelayerError("INVALID_PAYLOAD", "Can't attach transaction to action code.", 400);
         }
     } catch (error) {
@@ -139,7 +140,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(error.toJSON(), { status: error.status });
         }
 
-        console.error('Attach endpoint error:', error);
+
         return NextResponse.json(
             new ActionCodesRelayerError("UNKNOWN_ERROR", "Unknown error", 500),
             { status: 500 }
