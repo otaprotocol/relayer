@@ -2,6 +2,7 @@ import { Keypair } from '@solana/web3.js';
 import { ActionCodesProtocol, CodeGenerator, SolanaAdapter } from '@actioncodes/protocol';
 import { encryptField, decryptField } from './secure';
 import nacl from 'tweetnacl';
+import bs58 from 'bs58';
 
 export function signMessage(keypair: Keypair, message: string): Uint8Array {
     const messageBytes = new TextEncoder().encode(message);
@@ -259,7 +260,7 @@ describe('secure', () => {
             const actionCode = await protocol.createActionCode(keypair.publicKey.toBase58(),
                 async (message) => {
                     const signature = signMessage(keypair, message);
-                    return Buffer.from(signature).toString('base64');
+                    return bs58.encode(signature);
                 }, 'solana')
 
             const encrypted = encryptField(actionCode.encoded, code.code);
