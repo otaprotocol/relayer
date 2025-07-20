@@ -3,6 +3,7 @@ import { POST } from './route';
 import { decryptField } from '@actioncodes/relayer/utils/secure';
 import redis, { getKey } from '@actioncodes/relayer/utils/redis';
 import { sha256 } from 'js-sha256';
+import { ActionCode } from '@actioncodes/protocol';
 
 // Mock dependencies
 jest.mock('@actioncodes/relayer/utils/redis', () => ({
@@ -25,8 +26,16 @@ jest.mock('@actioncodes/relayer/protocol/protocol', () => ({
     },
 }));
 
+jest.mock('@actioncodes/protocol', () => ({
+    ...jest.requireActual('@actioncodes/protocol'),
+    ActionCode: {
+        fromEncoded: jest.fn(),
+    },
+}));
+
 const mockRedis = redis as jest.Mocked<typeof redis>;
 const mockDecryptField = decryptField as jest.MockedFunction<typeof decryptField>;
+const mockActionCodeFromEncoded = ActionCode.fromEncoded as jest.MockedFunction<typeof ActionCode.fromEncoded>;
 
 describe('POST /api/resolve', () => {
     const validCode = '12345678';
@@ -40,7 +49,7 @@ describe('POST /api/resolve', () => {
         pubkey: '9uVPTajxpMMvR9AKqhaqgSFS2AyybWanvEjnrvFfFehw',
         chain: 'solana',
         prefix: 'DEFAULT',
-        meta: {
+        metadata: {
             description: 'Test action code',
             params: { test: 'value' },
         },
@@ -73,7 +82,8 @@ describe('POST /api/resolve', () => {
             const encryptedData = 'encrypted-data';
 
             mockRedis.get.mockResolvedValue(encryptedData);
-            mockDecryptField.mockReturnValue(JSON.stringify(mockActionCode));
+            mockDecryptField.mockReturnValue('decrypted-encoded-data');
+            mockActionCodeFromEncoded.mockReturnValue(mockActionCode);
 
             const request = createMockRequest({ code: validCode });
             const response = await POST(request);
@@ -89,7 +99,7 @@ describe('POST /api/resolve', () => {
                 pubkey: mockActionCode.pubkey,
                 chain: mockActionCode.chain,
                 prefix: mockActionCode.prefix,
-                meta: mockActionCode.meta,
+                metadata: mockActionCode.metadata,
             });
             expect(mockRedis.get).toHaveBeenCalledWith(getKey(validCodeHash));
         });
@@ -104,7 +114,8 @@ describe('POST /api/resolve', () => {
             const encryptedData = 'encrypted-data';
 
             mockRedis.get.mockResolvedValue(encryptedData);
-            mockDecryptField.mockReturnValue(JSON.stringify(mockActionCode));
+            mockDecryptField.mockReturnValue('decrypted-encoded-data');
+            mockActionCodeFromEncoded.mockReturnValue(mockActionCode);
 
             const request = createMockRequest({ code: validCode });
             const response = await POST(request);
@@ -120,7 +131,8 @@ describe('POST /api/resolve', () => {
             const freshActionCode = createMockActionCode({ timestamp: freshTimestamp });
 
             mockRedis.get.mockResolvedValue('encrypted-data');
-            mockDecryptField.mockReturnValue(JSON.stringify(freshActionCode));
+            mockDecryptField.mockReturnValue('decrypted-encoded-data');
+            mockActionCodeFromEncoded.mockReturnValue(freshActionCode);
 
             const request = createMockRequest({ code: validCode });
             const response = await POST(request);
@@ -133,7 +145,7 @@ describe('POST /api/resolve', () => {
             const expiredTimestamp = now - 180000; // 3 minutes ago (expired)
             const expiredActionCode = createMockActionCode({ timestamp: expiredTimestamp });
 
-            mockDecryptField.mockReturnValue(JSON.stringify(expiredActionCode));
+            mockActionCodeFromEncoded.mockReturnValue(expiredActionCode);
 
             const expiredResponse = await POST(request);
             const expiredData = await expiredResponse.json();
@@ -219,7 +231,8 @@ describe('POST /api/resolve', () => {
             const nearExpiryActionCode = createMockActionCode({ timestamp: nearExpiryTimestamp });
 
             mockRedis.get.mockResolvedValue('encrypted-data');
-            mockDecryptField.mockReturnValue(JSON.stringify(nearExpiryActionCode));
+            mockDecryptField.mockReturnValue('decrypted-encoded-data');
+            mockActionCodeFromEncoded.mockReturnValue(nearExpiryActionCode);
 
             const request = createMockRequest({ code: validCode });
             const response = await POST(request);
@@ -235,11 +248,12 @@ describe('POST /api/resolve', () => {
         it('9. Decrypted ActionCode missing required fields', async () => {
             const incompleteActionCode = {
                 // Missing required fields like timestamp, pubkey, chain
-                meta: { description: 'test' },
-            };
+                metadata: { description: 'test' },
+            } as any; // Use any to bypass type checking for this test
 
             mockRedis.get.mockResolvedValue('encrypted-data');
-            mockDecryptField.mockReturnValue(JSON.stringify(incompleteActionCode));
+            mockDecryptField.mockReturnValue('decrypted-encoded-data');
+            mockActionCodeFromEncoded.mockReturnValue(incompleteActionCode);
 
             const request = createMockRequest({ code: validCode });
             const response = await POST(request);
@@ -250,24 +264,26 @@ describe('POST /api/resolve', () => {
         });
 
         it('10. Code resolves successfully but has no metadata', async () => {
-            const actionCodeWithoutMeta = createMockActionCode({ meta: undefined });
+            const actionCodeWithoutMeta = createMockActionCode({ metadata: undefined });
 
             mockRedis.get.mockResolvedValue('encrypted-data');
-            mockDecryptField.mockReturnValue(JSON.stringify(actionCodeWithoutMeta));
+            mockDecryptField.mockReturnValue('decrypted-encoded-data');
+            mockActionCodeFromEncoded.mockReturnValue(actionCodeWithoutMeta);
 
             const request = createMockRequest({ code: validCode });
             const response = await POST(request);
             const data = await response.json();
 
             expect(response.status).toBe(200);
-            expect(data.meta).toBeUndefined();
+            expect(data.metadata).toBeUndefined();
         });
 
         it('11. Code resolves but transaction is not attached yet', async () => {
             const actionCodeWithoutTransaction = createMockActionCode({ transaction: undefined });
 
             mockRedis.get.mockResolvedValue('encrypted-data');
-            mockDecryptField.mockReturnValue(JSON.stringify(actionCodeWithoutTransaction));
+            mockDecryptField.mockReturnValue('decrypted-encoded-data');
+            mockActionCodeFromEncoded.mockReturnValue(actionCodeWithoutTransaction);
 
             const request = createMockRequest({ code: validCode });
             const response = await POST(request);
@@ -294,6 +310,9 @@ describe('POST /api/resolve', () => {
         it('13. Malformed decrypted data (not JSON)', async () => {
             mockRedis.get.mockResolvedValue('encrypted-data');
             mockDecryptField.mockReturnValue('invalid-json-data');
+            mockActionCodeFromEncoded.mockImplementation(() => {
+                throw new Error('Invalid encoded data');
+            });
 
             const request = createMockRequest({ code: validCode });
             const response = await POST(request);
@@ -306,7 +325,8 @@ describe('POST /api/resolve', () => {
 
         it('14. Decrypted data is not an object', async () => {
             mockRedis.get.mockResolvedValue('encrypted-data');
-            mockDecryptField.mockReturnValue('"string-value"'); // JSON string, not object
+            mockDecryptField.mockReturnValue('decrypted-encoded-data');
+            mockActionCodeFromEncoded.mockReturnValue('string-value' as any); // Return string instead of object
 
             const request = createMockRequest({ code: validCode });
             const response = await POST(request);
@@ -324,7 +344,8 @@ describe('POST /api/resolve', () => {
             const encryptedData = 'encrypted-data';
 
             mockRedis.get.mockResolvedValue(encryptedData);
-            mockDecryptField.mockReturnValue(JSON.stringify(mockActionCode));
+            mockDecryptField.mockReturnValue('decrypted-encoded-data');
+            mockActionCodeFromEncoded.mockReturnValue(mockActionCode);
 
             const request = createMockRequest({ code: validCode });
 
@@ -347,7 +368,8 @@ describe('POST /api/resolve', () => {
             const encryptedData = 'encrypted-data';
 
             mockRedis.get.mockResolvedValue(encryptedData);
-            mockDecryptField.mockReturnValue(JSON.stringify(mockActionCode));
+            mockDecryptField.mockReturnValue('decrypted-encoded-data');
+            mockActionCodeFromEncoded.mockReturnValue(mockActionCode);
 
             const request = createMockRequest({ code: validCode });
             const response = await POST(request);
@@ -362,7 +384,8 @@ describe('POST /api/resolve', () => {
             const exactExpiryActionCode = createMockActionCode({ timestamp: exactExpiryTimestamp });
 
             mockRedis.get.mockResolvedValue('encrypted-data');
-            mockDecryptField.mockReturnValue(JSON.stringify(exactExpiryActionCode));
+            mockDecryptField.mockReturnValue('decrypted-encoded-data');
+            mockActionCodeFromEncoded.mockReturnValue(exactExpiryActionCode);
 
             const request = createMockRequest({ code: validCode });
             const response = await POST(request);

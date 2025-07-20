@@ -68,15 +68,15 @@ export function CodeDetails({ data, className }: CodeDetailsProps) {
   return (
     <div className={cn("space-y-6", className)}>
       {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 gap-8 max-w-[500px] mx-auto">
         {/* Left Column */}
         <div className="space-y-4">
           {/* Code Info */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400">🔍 Code</span>
-              <span className="font-mono text-sm">
-                {data.codeHash.slice(0, 8)}
+              <span className="font-mono text-sm truncate max-w-[200px]">
+                {data.codeHash}
               </span>
             </div>
 

@@ -274,8 +274,6 @@ describe('POST /api/register', () => {
       const response = await POST(request);
       const responseData = await response.json();
 
-      console.log('Unsupported chain test response:', { status: response.status, data: responseData });
-
       expect(response.status).toBe(400);
       expect(responseData.code).toBe('UNSUPPORTED_CHAIN');
       expect(responseData.message).toBe("Chain 'solana' is not supported");

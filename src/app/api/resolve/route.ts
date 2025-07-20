@@ -6,6 +6,8 @@ import { decryptField } from "@actioncodes/relayer/utils/secure";
 import redis, { getKey } from "@actioncodes/relayer/utils/redis";
 import protocol from "@actioncodes/relayer/protocol/protocol";
 import { sha256 } from "js-sha256";
+import bs58 from "bs58";
+import { ActionCode } from "@actioncodes/protocol";
 
 export async function POST(request: NextRequest) {
     let body;
@@ -40,7 +42,8 @@ export async function POST(request: NextRequest) {
         let decodedActionCode;
         try {
             const decrypted = decryptField(encrypted, code);
-            decodedActionCode = JSON.parse(decrypted);
+
+            decodedActionCode = ActionCode.fromEncoded(decrypted)
         } catch {
             throw new ActionCodesRelayerError("INVALID_PAYLOAD", "Invalid code provided for decryption", 400);
         }
@@ -69,7 +72,7 @@ export async function POST(request: NextRequest) {
             pubkey: decodedActionCode.pubkey,
             chain: decodedActionCode.chain,
             prefix: decodedActionCode.prefix,
-            meta: decodedActionCode.meta,
+            metadata: decodedActionCode.metadata,
         };
 
         return NextResponse.json(ResolveResponseSchema.parse(response));

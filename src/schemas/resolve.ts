@@ -15,7 +15,7 @@ export const ResolveResponseSchema = z.object({
     pubkey: z.string(),
     chain: z.string(),
     prefix: z.string().optional(),
-    meta: z.object({
+    metadata: z.object({
         description: z.string().optional(),
         params: z.record(z.string(), z.any()).optional(),
     }).optional(),
