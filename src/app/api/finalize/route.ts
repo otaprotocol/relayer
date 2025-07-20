@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
         // 9. Re-encrypt and store again in Redis and set time again to 2 mins to allow 
         // resolve for finalized
         const updatedEncrypted = encryptField(JSON.stringify(decodedActionCode), code);
-        await redis.set(key, updatedEncrypted, { ex: protocol.getConfig().codeTTL });
+        await redis.set(key, updatedEncrypted, { ex: protocol.getConfig().codeTTL / 1000 });
 
         // 10. Return structured result
         const response = {

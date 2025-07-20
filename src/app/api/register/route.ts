@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
             const encrypted = encryptField(actionCode.encoded, code);
             const key = getKey(sha256(actionCode.code));
 
-            await redis.set(key, encrypted, { ex: protocol.getConfig().codeTTL });
+            await redis.set(key, encrypted, { ex: protocol.getConfig().codeTTL / 1000 });
 
             return NextResponse.json(RegisterResponseSchema.parse({
                 codeHash: actionCode.codeHash,

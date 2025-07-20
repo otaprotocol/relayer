@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
             // Re-encrypt and store the updated action code
             const updatedEncrypted = encryptField(JSON.stringify(signedActionCode), code);
             const remainingTTL = protocol.getConfig().codeTTL - (Date.now() - actionCode.timestamp);
-            await redis.set(key, updatedEncrypted, { ex: remainingTTL });
+            await redis.set(key, updatedEncrypted, { ex: remainingTTL / 1000 });
 
             const response = {
                 status: 'success',
