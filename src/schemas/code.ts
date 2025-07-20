@@ -15,4 +15,4 @@ export const CodeSchema = z.string()
 export const MetaSchema = z.object({
     description: z.string().max(300).optional(),
     params: z.record(z.string(), z.any()).optional(),
-}).optional(); 
+}).optional().default({}); 

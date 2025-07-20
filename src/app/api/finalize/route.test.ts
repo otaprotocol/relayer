@@ -167,7 +167,7 @@ describe('POST /api/finalize', () => {
       expect(mockRedis.set).toHaveBeenCalledWith(
         `actioncode:${sha256(validCode)}`,
         'new-encrypted-data',
-        { ex: CODE_TTL }
+        { ex: CODE_TTL / 1000 }
       );
     });
   });

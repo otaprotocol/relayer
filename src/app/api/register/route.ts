@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     try {
         const parsed = RegisterRequestSchema.parse(body);
-        const { code, pubkey, signature, prefix = PROTOCOL_CODE_PREFIX, chain, timestamp } = parsed;
+        const { code, pubkey, signature, prefix = PROTOCOL_CODE_PREFIX, chain, timestamp, metadata } = parsed;
 
         if (!protocol.isChainSupported(chain)) {
             throw new ActionCodesRelayerError("UNSUPPORTED_CHAIN", `Chain '${chain}' is not supported`);
@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
                 chain,
                 status: 'pending',
                 expiresAt: timestamp + protocol.getConfig().codeTTL,
+                metadata,
             });
 
             if (!protocol.validateActionCode(actionCode)) {

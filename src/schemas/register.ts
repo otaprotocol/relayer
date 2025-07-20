@@ -7,7 +7,6 @@ import { CodeSchema, MetaSchema } from './code';
 export const RegisterRequestSchema = z.object({
     code: CodeSchema,
     pubkey: z.string()
-        .length(44)
         .refine(val => {
             try {
                 new PublicKey(val);
@@ -29,7 +28,7 @@ export const RegisterRequestSchema = z.object({
     timestamp: z.number().int().positive(),
     prefix: z.string().min(MIN_PREFIX_LENGTH).max(MAX_PREFIX_LENGTH).optional(),
     chain: z.enum(SUPPORTED_CHAINS),
-    meta: MetaSchema.optional(),
+    metadata: MetaSchema.optional(),
 });
 
 export const RegisterResponseSchema = z.object({
