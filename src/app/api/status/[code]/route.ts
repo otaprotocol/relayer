@@ -70,10 +70,11 @@ export async function GET(
         const hasTransaction = !!transaction.transaction;
         const hasMessage = !!transaction.message;
         const finalizedSignature = transaction.txSignature;
+        const signedMessage = transaction.signedMessage;
 
         // Infer status
         let status: 'pending' | 'resolved' | 'finalized';
-        if (finalizedSignature) {
+        if (finalizedSignature || signedMessage) {
             status = 'finalized';
         } else if (hasTransaction || hasMessage) {
             status = 'resolved';
@@ -87,6 +88,7 @@ export async function GET(
             hasTransaction,
             hasMessage,
             finalizedSignature,
+            signedMessage,
         };
 
         return NextResponse.json(StatusResponseSchema.parse(response));
