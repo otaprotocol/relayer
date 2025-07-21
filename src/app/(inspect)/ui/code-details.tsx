@@ -7,7 +7,7 @@ import { ExternalLink, AlertCircle, CheckCircle, Clock, XCircle } from "lucide-r
 interface CodeDetailsProps {
   data: {
     codeHash: string
-    issuedAt: number
+    timestamp: number
     expiresAt: number
     remainingInSeconds: number
     status: 'pending' | 'active' | 'expired' | 'finalized' | 'error' | 'resolved'

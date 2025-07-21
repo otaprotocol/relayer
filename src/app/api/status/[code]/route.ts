@@ -62,8 +62,8 @@ export async function GET(
 
         // Calculate expiration time
         const now = Date.now();
-        const issuedAt = decodedActionCode.timestamp || now;
-        const expiresAt = issuedAt + protocol.getConfig().codeTTL;
+        const timestamp = decodedActionCode.timestamp || now;
+        const expiresAt = timestamp + protocol.getConfig().codeTTL;
 
         // Defensive: transaction may be missing or partial
         const transaction = decodedActionCode.transaction || {};

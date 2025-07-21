@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 
             return NextResponse.json(RegisterResponseSchema.parse({
                 codeHash: actionCode.codeHash,
-                issuedAt: actionCode.timestamp,
+                timestamp: actionCode.timestamp,
                 expiresAt: actionCode.timestamp + protocol.getConfig().codeTTL,
                 remainingInSeconds: Math.floor(actionCode.remainingTime / 1000),
                 status: actionCode.status,

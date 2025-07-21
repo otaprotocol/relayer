@@ -41,14 +41,15 @@ describe('POST /api/resolve', () => {
     const validCode = '12345678';
     const validCodeHash = sha256(validCode);
     const now = Date.now();
-    const issuedAt = now - 60000; // 1 minute ago
-    const expiresAt = issuedAt + 120000; // 2 minutes from issuedAt
+    const timestamp = now - 60000; // 1 minute ago
+    const expiresAt = timestamp + 120000; // 2 minutes from timestamp
 
     const createMockActionCode = (overrides: any = {}) => ({
-        timestamp: issuedAt,
-        pubkey: '9uVPTajxpMMvR9AKqhaqgSFS2AyybWanvEjnrvFfFehw',
+        timestamp: timestamp,
+        pubkey: '9uVPTajxpMMvR9AKqgSFS2AyybWanvEjnrvFfFehw',
         chain: 'solana',
         prefix: 'DEFAULT',
+        signature: 'dummy-signature', // <-- Add this line
         metadata: {
             description: 'Test action code',
             params: { test: 'value' },
@@ -92,7 +93,7 @@ describe('POST /api/resolve', () => {
             expect(response.status).toBe(200);
             expect(data).toMatchObject({
                 codeHash: validCodeHash,
-                issuedAt: issuedAt,
+                timestamp: timestamp,
                 expiresAt: expiresAt,
                 remainingInSeconds: 60, // 1 minute remaining
                 status: 'active',

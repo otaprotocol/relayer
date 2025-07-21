@@ -56,8 +56,8 @@ export async function POST(request: NextRequest) {
 
         // Check if code is expired
         const now = Date.now();
-        const issuedAt = decodedActionCode.timestamp || now;
-        const expiresAt = issuedAt + protocol.getConfig().codeTTL;
+        const timestamp = decodedActionCode.timestamp || now;
+        const expiresAt = timestamp + protocol.getConfig().codeTTL;
         const remainingTime = Math.max(0, expiresAt - now);
 
         if (remainingTime <= 0) {
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
             const actionCode = ActionCode.fromPayload({
                 code: decodedActionCode.code || code,
                 pubkey: decodedActionCode.pubkey,
-                timestamp: issuedAt,
+                timestamp: timestamp,
                 chain: decodedActionCode.chain as "solana",
                 prefix: decodedActionCode.prefix || 'DEFAULT',
                 signature: decodedActionCode.signature || '',

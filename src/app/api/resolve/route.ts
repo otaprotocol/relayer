@@ -6,7 +6,6 @@ import { decryptField } from "@actioncodes/relayer/utils/secure";
 import redis, { getKey } from "@actioncodes/relayer/utils/redis";
 import protocol from "@actioncodes/relayer/protocol/protocol";
 import { sha256 } from "js-sha256";
-import bs58 from "bs58";
 import { ActionCode } from "@actioncodes/protocol";
 
 export async function POST(request: NextRequest) {
@@ -54,8 +53,8 @@ export async function POST(request: NextRequest) {
         }
 
         // Calculate remaining time and status
-        const issuedAt = decodedActionCode.timestamp;
-        const expiresAt = issuedAt + protocol.getConfig().codeTTL;
+        const timestamp = decodedActionCode.timestamp;
+        const expiresAt = timestamp + protocol.getConfig().codeTTL;
         const remainingTime = Math.max(0, expiresAt - Date.now());
         const remainingInSeconds = Math.floor(remainingTime / 1000);
 
@@ -64,7 +63,7 @@ export async function POST(request: NextRequest) {
 
         const response = {
             codeHash,
-            issuedAt,
+            timestamp,
             expiresAt,
             remainingInSeconds,
             status,

@@ -8,7 +8,7 @@ export const ResolveRequestSchema = z.object({
 
 export const ResolveResponseSchema = z.object({
     codeHash: z.string(),
-    issuedAt: z.number().int().positive(),
+    timestamp: z.number().int().positive(),
     expiresAt: z.number().int().positive(),
     remainingInSeconds: z.number().int().min(0),
     status: z.enum(['pending', 'active', 'expired', 'finalized', 'error'] as ActionCodeStatus[]),

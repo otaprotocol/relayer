@@ -32,11 +32,11 @@ describe('GET /api/status/[code]', () => {
     const validCode = '12345678';
     const validCodeHash = sha256(validCode);
     const now = Date.now();
-    const issuedAt = now - 60000; // 1 minute ago
-    const expiresAt = issuedAt + 120000; // 2 minutes from issuedAt
+    const timestamp = now - 60000; // 1 minute ago
+    const expiresAt = timestamp + 120000; // 2 minutes from timestamp
 
     const createMockActionCode = (overrides: any = {}) => ({
-        timestamp: issuedAt,
+        timestamp: timestamp,
         pubkey: '9uVPTajxpMMvR9AKqhaqgSFS2AyybWanvEjnrvFfFehw',
         chain: 'solana',
         prefix: 'DEFAULT',
@@ -344,7 +344,7 @@ describe('GET /api/status/[code]', () => {
 
         it('16. Corrupted ActionCode with invalid status enum is handled gracefully', async () => {
             const corruptedActionCode = {
-                timestamp: issuedAt,
+                timestamp: timestamp,
                 pubkey: '9uVPTajxpMMvR9AKqhaqgSFS2AyybWanvEjnrvFfFehw',
                 chain: 'solana',
                 // Corrupted: has an invalid status field that doesn't match our enum

@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
 
         // 3. Ensure code is not expired
         const now = Date.now();
-        const issuedAt = decodedActionCode.timestamp || now;
-        const expiresAt = issuedAt + protocol.getConfig().codeTTL;
+        const timestamp = decodedActionCode.timestamp || now;
+        const expiresAt = timestamp + protocol.getConfig().codeTTL;
 
         if (now > expiresAt) {
             return NextResponse.json(

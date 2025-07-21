@@ -166,7 +166,7 @@ describe('POST /api/register', () => {
       expect(response.status).toBe(200);
       expect(responseData).toMatchObject({
         codeHash: validCodeHash,
-        issuedAt: 1234567890,
+        timestamp: 1234567890,
         remainingInSeconds: Math.floor(CODE_TTL / 1000),
         status: 'pending',
       });

@@ -33,7 +33,7 @@ export const RegisterRequestSchema = z.object({
 
 export const RegisterResponseSchema = z.object({
     codeHash: z.string(),
-    issuedAt: z.number().int().positive(),
+    timestamp: z.number().int().positive(),
     expiresAt: z.number().int().positive(),
     remainingInSeconds: z.number().int().positive(),
     status: z.enum(['pending', 'active', 'expired', 'finalized', 'error'] as ActionCodeStatus[]),

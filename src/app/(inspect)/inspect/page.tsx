@@ -9,7 +9,7 @@ import { AlertCircle } from "lucide-react"
 
 interface ResolveResponse {
   codeHash: string
-  issuedAt: number
+  timestamp: number
   expiresAt: number
   remainingInSeconds: number
   status: 'pending' | 'active' | 'expired' | 'finalized' | 'error' | 'resolved'
