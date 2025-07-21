@@ -24,6 +24,7 @@ export const ResolveResponseSchema = z.object({
         txSignature: z.string().optional(),
         txType: z.string().optional(),
         message: z.string().optional(),
+        signedMessage: z.string().optional(),
         intentType: z.enum(['transaction', 'sign-only']).optional(),
     }).optional(),
 }); 

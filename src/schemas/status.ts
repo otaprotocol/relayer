@@ -13,6 +13,7 @@ export const StatusResponseSchema = z.object({
     expiresAt: z.number().int().positive(), // UNIX timestamp
     hasTransaction: z.boolean(),
     hasMessage: z.boolean(),
+    signedMessage: z.string().optional(), // if message was signed
     finalizedSignature: z.string().optional(), // if broadcasted
 });
 
