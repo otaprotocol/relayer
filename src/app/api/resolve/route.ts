@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
             expiresAt,
             remainingInSeconds,
             status,
+            signature: decodedActionCode.signature,
             transaction: decodedActionCode.transaction,
             pubkey: decodedActionCode.pubkey,
             chain: decodedActionCode.chain,
