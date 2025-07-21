@@ -111,10 +111,10 @@ export async function POST(request: NextRequest) {
             const signedActionCode = await adapter.signWithProtocolKey(updatedActionCode, signerKey);
 
             // Re-encrypt and store the updated action code
-            const updatedEncrypted = encryptField(JSON.stringify(signedActionCode), code);
-            const remainingTTL = protocol.getConfig().codeTTL - (Date.now() - actionCode.timestamp);
-            await redis.set(key, updatedEncrypted, { ex: remainingTTL / 1000 });
-
+            const updatedEncrypted = encryptField(signedActionCode.encoded, code);
+            const remainingTTL = updatedActionCode.timestamp + protocol.getConfig().codeTTL - Date.now();
+            await redis.set(key, updatedEncrypted, { ex: Math.ceil(remainingTTL / 1000) });
+            
             const response = {
                 status: 'success',
                 codeHash,
@@ -125,8 +125,7 @@ export async function POST(request: NextRequest) {
             };
 
             return NextResponse.json(AttachResponseSchema.parse(response));
-        } catch {
-
+        } catch (error) {
             throw new ActionCodesRelayerError("INVALID_PAYLOAD", "Can't attach transaction to action code.", 400);
         }
     } catch (error) {

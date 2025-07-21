@@ -130,7 +130,7 @@ export function CodeDetails({ data, className }: CodeDetailsProps) {
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400">🧠 Transaction</span>
               <span className="text-sm">
-                {data.transaction?.txSignature ? 'Attached' : 'Not Attached'}
+                {data.transaction?.transaction ? 'Attached' : 'Not Attached'}
               </span>
             </div>
 

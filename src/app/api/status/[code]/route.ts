@@ -6,6 +6,7 @@ import { decryptField } from "@actioncodes/relayer/utils/secure";
 import redis, { getKey } from "@actioncodes/relayer/utils/redis";
 import protocol from "@actioncodes/relayer/protocol/protocol";
 import { sha256 } from "js-sha256";
+import { ActionCode } from "@actioncodes/protocol";
 
 export async function GET(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -36,7 +37,7 @@ export async function GET(
         let decodedActionCode;
         try {
             const decrypted = decryptField(encrypted, code);
-            decodedActionCode = JSON.parse(decrypted);
+            decodedActionCode = ActionCode.fromEncoded(decrypted);
         } catch (error) {
             const errorResponse = {
                 error: "Invalid code provided",

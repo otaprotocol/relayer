@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         let decodedActionCode;
         try {
             const decrypted = decryptField(encrypted, code);
-
+            
             decodedActionCode = ActionCode.fromEncoded(decrypted)
         } catch {
             throw new ActionCodesRelayerError("INVALID_PAYLOAD", "Invalid code provided for decryption", 400);
