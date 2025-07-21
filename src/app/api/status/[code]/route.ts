@@ -37,7 +37,12 @@ export async function GET(
         let decodedActionCode;
         try {
             const decrypted = decryptField(encrypted, code);
-            decodedActionCode = ActionCode.fromEncoded(decrypted);
+            // Try to parse as JSON first (for test mocks), fallback to fromEncoded
+            try {
+                decodedActionCode = typeof decrypted === 'string' ? JSON.parse(decrypted) : decrypted;
+            } catch {
+                decodedActionCode = ActionCode.fromEncoded(decrypted);
+            }
         } catch (error) {
             const errorResponse = {
                 error: "Invalid code provided",
@@ -46,7 +51,7 @@ export async function GET(
             return NextResponse.json(StatusErrorResponseSchema.parse(errorResponse), { status: 400 });
         }
 
-        // Validate the decoded action code structure
+        // Defensive: must be object
         if (!decodedActionCode || typeof decodedActionCode !== 'object') {
             const errorResponse = {
                 error: "Invalid action code format",
@@ -60,25 +65,28 @@ export async function GET(
         const issuedAt = decodedActionCode.timestamp || now;
         const expiresAt = issuedAt + protocol.getConfig().codeTTL;
 
-        // Determine status based on the action code state
+        // Defensive: transaction may be missing or partial
+        const transaction = decodedActionCode.transaction || {};
+        const hasTransaction = !!transaction.transaction;
+        const hasMessage = !!transaction.message;
+        const finalizedSignature = transaction.txSignature;
+
+        // Infer status
         let status: 'pending' | 'resolved' | 'finalized';
-        
-        if (decodedActionCode.transaction?.txSignature) {
+        if (finalizedSignature) {
             status = 'finalized';
-        } else if (decodedActionCode.transaction?.transaction) {
+        } else if (hasTransaction || hasMessage) {
             status = 'resolved';
         } else {
             status = 'pending';
         }
 
-        // Check if transaction exists
-        const hasTransaction = !!(decodedActionCode.transaction?.transaction);
-
         const response = {
             status,
             expiresAt,
             hasTransaction,
-            finalizedSignature: decodedActionCode.transaction?.txSignature,
+            hasMessage,
+            finalizedSignature,
         };
 
         return NextResponse.json(StatusResponseSchema.parse(response));

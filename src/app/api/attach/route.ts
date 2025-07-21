@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     try {
         const parsed = AttachRequestSchema.parse(body);
-        const { code, transaction, chain, meta } = parsed;
+        const { code, transaction, chain, meta, intentType, message } = parsed;
 
         // Derive the codeHash from the code
         const codeHash = sha256(code);
@@ -98,30 +98,45 @@ export async function POST(request: NextRequest) {
                 },
             });
 
-            // Get a random keypair from the keypairs array to rotate over time
-            const signerKey = keypairs[Math.floor(Math.random() * keypairs.length)];
+            if (intentType === 'transaction') {
+                // Get a random keypair from the keypairs array to rotate over time
+                const signerKey = keypairs[Math.floor(Math.random() * keypairs.length)];
 
-            // Attach transaction with protocol meta
-            const updatedActionCode = protocol.attachTransaction(
-                actionCode,
-                transaction,
-                signerKey.publicKey.toBase58()
-            );
+                // Attach transaction with protocol meta
+                const updatedActionCode = protocol.attachTransaction(
+                    actionCode,
+                    transaction || '',
+                    signerKey.publicKey.toBase58()
+                );
 
-            const signedActionCode = await adapter.signWithProtocolKey(updatedActionCode, signerKey);
+                const signedActionCode = await adapter.signWithProtocolKey(updatedActionCode, signerKey);
 
-            // Re-encrypt and store the updated action code
-            const updatedEncrypted = encryptField(signedActionCode.encoded, code);
-            const remainingTTL = updatedActionCode.timestamp + protocol.getConfig().codeTTL - Date.now();
-            await redis.set(key, updatedEncrypted, { ex: Math.ceil(remainingTTL / 1000) });
-            
+                // Re-encrypt and store the updated action code
+                const updatedEncrypted = encryptField(signedActionCode.encoded, code);
+                const remainingTTL = updatedActionCode.timestamp + protocol.getConfig().codeTTL - Date.now();
+                await redis.set(key, updatedEncrypted, { ex: Math.ceil(remainingTTL / 1000) });
+            } else if (intentType === 'sign-only') {
+                // Get a random keypair from the keypairs array to rotate over time
+                const updatedActionCode = protocol.attachMessage(actionCode, message || '');
+
+                // Re-encrypt and store the updated action code
+                const updatedEncrypted = encryptField(updatedActionCode.encoded, code);
+                const remainingTTL = updatedActionCode.timestamp + protocol.getConfig().codeTTL - Date.now();
+                await redis.set(key, updatedEncrypted, { ex: Math.ceil(remainingTTL / 1000) });
+            } else {
+                throw new ActionCodesRelayerError("INVALID_INTENT_TYPE", "Invalid intent type", 400);
+            }
+
+
+
             const response = {
                 status: 'success',
                 codeHash,
                 expiresAt,
                 chain,
                 actionCodeStatus: 'resolved',
-                hasTransaction: true,
+                hasTransaction: intentType === 'transaction',
+                hasMessage: intentType === 'sign-only',
             };
 
             return NextResponse.json(AttachResponseSchema.parse(response));
@@ -133,7 +148,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(
                 new ActionCodesRelayerError("INVALID_PAYLOAD", "Invalid request payload", 400, {
                     details: error.message,
-                }),
+                }).toJSON(),
                 { status: 400 }
             );
         }
@@ -142,9 +157,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(error.toJSON(), { status: error.status });
         }
 
-
+        // Unknown error: return 500
         return NextResponse.json(
-            new ActionCodesRelayerError("UNKNOWN_ERROR", "Unknown error", 500),
+            new ActionCodesRelayerError("UNKNOWN_ERROR", "Unknown error", 500).toJSON(),
             { status: 500 }
         );
     }

@@ -16,13 +16,15 @@ export const FinalizeRequestSchema = z.object({
         }
     }, {
         message: 'Transaction signature must be a valid base58 string of 64 bytes',
-    }),
+    }).optional(),
+    signedMessage: z.string().optional(),
 });
 
 // Response schema for finalize endpoint
 export const FinalizeResponseSchema = z.object({
     status: z.literal('success'),
-    finalizedSignature: z.string(),
+    finalizedSignature: z.string().optional(),
+    finalizedMessage: z.string().optional(),
     expiresAt: z.number().int().positive(),
 });
 

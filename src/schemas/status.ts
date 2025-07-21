@@ -12,6 +12,7 @@ export const StatusResponseSchema = z.object({
     status: z.enum(['pending', 'resolved', 'finalized'] as ActionCodeStatus[]),
     expiresAt: z.number().int().positive(), // UNIX timestamp
     hasTransaction: z.boolean(),
+    hasMessage: z.boolean(),
     finalizedSignature: z.string().optional(), // if broadcasted
 });
 

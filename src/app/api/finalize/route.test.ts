@@ -164,6 +164,7 @@ describe('POST /api/finalize', () => {
     return {
       code: validCode,
       signature: validSignature,
+      intentType: 'transaction',
       ...overrides,
     };
   };

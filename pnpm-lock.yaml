@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@actioncodes/protocol':
-        specifier: ^1.1.7
-        version: 1.1.7(@solana/spl-memo@0.2.5(@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10))(tweetnacl@1.0.3)
+        specifier: ^1.2.0
+        version: 1.2.0(@solana/spl-memo@0.2.5(@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10))(tweetnacl@1.0.3)
       '@actioncodes/sdk':
         specifier: ^1.2.7
         version: 1.2.7(@solana/spl-memo@0.2.5(@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(tweetnacl@1.0.3)
@@ -105,8 +105,8 @@ importers:
 
 packages:
 
-  '@actioncodes/protocol@1.1.7':
-    resolution: {integrity: sha512-L899LfXAWpRzVrn0afNeQW2wtHq11p7CDxnvtn5k25ABcHGbePqJcuaVedPYip7iEZRJJDDM/FyYEwsO4cZSYg==}
+  '@actioncodes/protocol@1.2.0':
+    resolution: {integrity: sha512-UfQGF91tjjt9CR5WtEyMUg79S8S2B3PALXMUNJlev+Yjtk11Egj0fKb9gvWYzdVwGVuwLGMrSe716nKdm1ZtRw==}
     peerDependencies:
       '@solana/spl-memo': ^0.2.5
       '@solana/web3.js': ^1.98.2
@@ -3161,7 +3161,7 @@ packages:
 
 snapshots:
 
-  '@actioncodes/protocol@1.1.7(@solana/spl-memo@0.2.5(@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10))(tweetnacl@1.0.3)':
+  '@actioncodes/protocol@1.2.0(@solana/spl-memo@0.2.5(@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10))(tweetnacl@1.0.3)':
     dependencies:
       '@solana/spl-memo': 0.2.5(@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10))
       '@solana/web3.js': 1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)
@@ -3171,7 +3171,7 @@ snapshots:
 
   '@actioncodes/sdk@1.2.7(@solana/spl-memo@0.2.5(@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(tweetnacl@1.0.3)':
     dependencies:
-      '@actioncodes/protocol': 1.1.7(@solana/spl-memo@0.2.5(@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10))(tweetnacl@1.0.3)
+      '@actioncodes/protocol': 1.2.0(@solana/spl-memo@0.2.5(@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10))(tweetnacl@1.0.3)
       '@solana/web3.js': 1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)
       framer-motion: 12.23.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
     transitivePeerDependencies:

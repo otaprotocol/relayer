@@ -134,6 +134,7 @@ describe('POST /api/attach', () => {
       transaction: {
         transaction: 'base64-transaction-data',
         txType: 'transfer',
+        intentType: 'transaction',
       },
     });
     mockRedis.set.mockResolvedValue('OK');
@@ -175,6 +176,7 @@ describe('POST /api/attach', () => {
         code: '12345678',
         chain: 'solana',
         transaction: 'dGVzdC10cmFuc2FjdGlvbi1kYXRh', // base64 encoded
+        intentType: 'transaction',
         meta: {
           title: 'Test Transaction',
           description: 'Test transaction description',
@@ -201,6 +203,7 @@ describe('POST /api/attach', () => {
       const requestBody = {
         code: '12345678',
         chain: 'solana',
+        intentType: 'transaction',
         transaction: 'dGVzdC10cmFuc2FjdGlvbi1kYXRh',
       };
 
@@ -219,6 +222,7 @@ describe('POST /api/attach', () => {
       const requestBody = {
         code: 'invalid',
         chain: 'solana',
+        intentType: 'transaction',
         transaction: 'dGVzdC10cmFuc2FjdGlvbi1kYXRh',
       };
 
@@ -234,6 +238,7 @@ describe('POST /api/attach', () => {
       const requestBody = {
         code: '12345678',
         chain: 'solana',
+        intentType: 'transaction',
         transaction: 'invalid-base64!@#',
       };
 
@@ -249,6 +254,7 @@ describe('POST /api/attach', () => {
       const requestBody = {
         code: '12345678',
         chain: 'unsupported',
+        intentType: 'transaction',
         transaction: 'dGVzdC10cmFuc2FjdGlvbi1kYXRh',
       };
 
@@ -266,6 +272,7 @@ describe('POST /api/attach', () => {
       const requestBody = {
         code: '12345678',
         chain: 'solana',
+        intentType: 'transaction',
         transaction: 'dGVzdC10cmFuc2FjdGlvbi1kYXRh',
       };
 
@@ -293,6 +300,7 @@ describe('POST /api/attach', () => {
       const requestBody = {
         code: '12345678',
         chain: 'solana',
+        intentType: 'transaction',
         transaction: 'dGVzdC10cmFuc2FjdGlvbi1kYXRh',
       };
 
@@ -319,6 +327,7 @@ describe('POST /api/attach', () => {
       const requestBody = {
         code: '12345678',
         chain: 'solana',
+        intentType: 'transaction',
         transaction: 'dGVzdC10cmFuc2FjdGlvbi1kYXRh',
       };
 
@@ -373,6 +382,7 @@ describe('POST /api/attach', () => {
       const requestBody = {
         code: '12345678',
         chain: 'solana',
+        intentType: 'transaction',
         transaction: serializedTx,
         meta: {
           title: 'Real Solana Transaction',
@@ -445,6 +455,7 @@ describe('POST /api/attach', () => {
       const requestBody = {
         code: '12345678',
         chain: 'solana',
+        intentType: 'transaction',
         transaction: serializedTx,
       };
 
@@ -513,6 +524,7 @@ describe('POST /api/attach', () => {
               txType: 'transfer',
               protocolMeta: 'encoded-protocol-memo',
               protocolSignature: protocolKeypair.publicKey.toBase58(),
+              intentType: 'transaction',
             },
             status: 'resolved',
             expiresAt: Date.now() + 240000,
@@ -525,6 +537,7 @@ describe('POST /api/attach', () => {
         code: '12345678',
         chain: 'solana',
         transaction: serializedTx,
+        intentType: 'transaction',
         meta: {
           title: 'Transaction with Protocol Memo',
           description: 'Testing protocol memo inclusion',
@@ -625,6 +638,7 @@ describe('POST /api/attach', () => {
         code: '12345678',
         chain: 'solana',
         transaction: serializedTx,
+        intentType: 'transaction',
       };
 
       // Mock ActionCode.fromEncoded to return a valid action code
@@ -678,6 +692,7 @@ describe('POST /api/attach', () => {
         code: '12345678',
         chain: 'solana',
         transaction: 'dGVzdC10cmFuc2FjdGlvbi1kYXRh',
+        intentType: 'transaction',
       };
 
       const request = createRequest(requestBody);

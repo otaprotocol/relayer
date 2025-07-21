@@ -8,6 +8,7 @@ type ActionCodesRelayerErrorCode =
     | 'TX_MISSING'
     | 'UNSUPPORTED_CHAIN'
     | 'ADAPTER_NOT_FOUND'
+    | 'INVALID_INTENT_TYPE'
     | 'UNKNOWN_ERROR';
 
 export class ActionCodesRelayerError extends Error {

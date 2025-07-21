@@ -5,6 +5,7 @@ import { CodeSchema, MetaSchema } from './code';
 export const AttachRequestSchema = z.object({
     code: CodeSchema,
     chain: z.enum(SUPPORTED_CHAINS),
+    intentType: z.enum(['transaction', 'sign-only']),
     transaction: z.string().min(20).refine(val => {
         try {
             // Validate base64 format for Solana transactions
@@ -13,7 +14,8 @@ export const AttachRequestSchema = z.object({
         } catch {
             return false;
         }
-    }, { message: 'Invalid base64 transaction' }),
+    }, { message: 'Invalid base64 transaction' }).optional(),
+    message: z.string().optional(),
     meta: MetaSchema,
 });
 
@@ -23,5 +25,6 @@ export const AttachResponseSchema = z.object({
     expiresAt: z.number().int().positive(),
     chain: z.string(),
     actionCodeStatus: z.literal('resolved'),
-    hasTransaction: z.literal(true),
+    hasTransaction: z.boolean(),
+    hasMessage: z.boolean(),
 }); 
