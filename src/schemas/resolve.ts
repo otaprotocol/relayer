@@ -13,6 +13,7 @@ export const ResolveResponseSchema = z.object({
     remainingInSeconds: z.number().int().min(0),
     status: z.enum(['pending', 'active', 'expired', 'finalized', 'error'] as ActionCodeStatus[]),
     pubkey: z.string(),
+    signature: z.string(),
     chain: z.string(),
     prefix: z.string().optional(),
     metadata: z.object({
