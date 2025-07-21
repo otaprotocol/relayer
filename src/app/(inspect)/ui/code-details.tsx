@@ -22,6 +22,8 @@ interface CodeDetailsProps {
       transaction?: string
       txSignature?: string
       txType?: string
+      message?: string
+      signedMessage?: string
     }
   }
   className?: string
@@ -130,7 +132,7 @@ export function CodeDetails({ data, className }: CodeDetailsProps) {
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400">🧠 Transaction</span>
               <span className="text-sm">
-                {data.transaction?.transaction ? 'Attached' : 'Not Attached'}
+                {data.transaction?.transaction ? 'Tx Attached' : 'No Tx Attached'}
               </span>
             </div>
 
@@ -147,6 +149,25 @@ export function CodeDetails({ data, className }: CodeDetailsProps) {
                     {truncateAddress(data.transaction.txSignature, 6)}
                     <ExternalLink className="h-3 w-3" />
                   </a>
+                </div>
+              </>
+            )}
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">🧠 Message</span>
+              <span className="text-sm">
+                {data.transaction?.message ? 'Message Attached' : 'No Message Attached'}
+              </span>
+            </div>
+
+            {data.transaction?.message && (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">🔍 Signed Message</span>
+                  <span className="text-sm">
+                    {data.transaction.signedMessage}
+                  </span>
                 </div>
               </>
             )}
