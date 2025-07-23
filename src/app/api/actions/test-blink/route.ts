@@ -1,5 +1,4 @@
 import { ActionCodesClient } from '@actioncodes/sdk'
-import { AttachRequestSchema, AttachResponseSchema } from "@actioncodes/relayer/schemas/attach";
 import { ActionGetResponse, ActionPostResponse, ACTIONS_CORS_HEADERS, BLOCKCHAIN_IDS } from "@solana/actions";
 
 const actionCodesClient = new ActionCodesClient();
@@ -18,7 +17,7 @@ export const GET = async () => {
         title: 'Test Blink with Action Codes',
         description: "This blink demonstrates how to use action codes to interact with the blockchain.",
         label: 'Use Action Codes',
-        icon: '',
+        icon: 'https://placehold.co/400x400/000000/FFFFFF.png',
         links: {
             actions: [
                 {
@@ -80,10 +79,7 @@ export const POST = async (req: Request) => {
                     }
                 }
 
-                return new Response(JSON.stringify(response), {
-                    status: 200,
-                    headers,
-                });
+                return Response.json(response, { status: 200, headers })
             } else if (status.status === 'expired') {
                 return new Response(JSON.stringify({ error: "Action code expired" }), {
                     status: 400,
