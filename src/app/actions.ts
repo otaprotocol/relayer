@@ -12,18 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { redis } from './utils/redis';
-import { ActionCodesRelayerError } from './utils/error';
-
-'use server'
-
 import { PROTOCOL_CODE_PREFIX, PROTOCOL_PREFIX, PROTOCOL_VERSION } from "@actioncodes/protocol"
 import { getProtocolPubkeys } from "@actioncodes/relayer/config/keys";
 
 export async function getRelayerData() {
     try {
         const pubkeys = getProtocolPubkeys().map((pKey) => pKey.toBase58());
-        
+
         return {
             name: "Official Action Codes Relayer",
             docs: "https://ota.codes/docs",
